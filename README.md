@@ -10,6 +10,15 @@
 provenance verification, and approval-baseline diff for the model files you
 download and deploy.
 
+## Demo
+
+[![modelseal demo](docs/demo-frame.png)](video/out/modelseal_demo.mp4)
+
+A ~90s narrated walkthrough ([`video/out/modelseal_demo.mp4`](video/out/modelseal_demo.mp4)):
+why model files are dangerous to open → non-executing x-ray → provenance
+verification → approval-baseline diff → format-spoofing and bypass resistance →
+deterministic-verdict design. All data shown is synthetic.
+
 ## Motivation
 
 The AI supply chain has scanners for packages, source code, and runtime I/O.

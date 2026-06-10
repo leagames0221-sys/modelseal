@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>modelseal — デモ（AIモデルファイルの検品ゲート）</title>
+<style>
+  :root{--ink:#0a1322;--ink2:#13233f;--text:#33425b;--soft:#64748b;--line:#e3e8ef;--bg:#fafbfc;--accent:#0d9488;--accent2:#2dd4bf;--card:#fff;--ok:#16a34a;--okbg:#f0fdf4;--add:#16a34a;--del:#dc2626;--qty:#d97706;--rev:#7c3aed;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans JP',-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);line-height:1.85;font-feature-settings:"palt" 1;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 2.2rem}
+  section{padding:3.4rem 0;border-top:1px solid var(--line);min-height:88vh;display:flex;flex-direction:column;justify-content:center}
+  h2{font-size:2rem;font-weight:900;letter-spacing:-.02em;margin-bottom:1rem}
+  h2 .n{font-family:'JetBrains Mono',monospace;font-size:.9rem;color:var(--accent);display:block;letter-spacing:.18em;margin-bottom:.4rem}
+  h2 .ac{color:var(--accent)}
+  p{color:var(--text);margin-bottom:.6rem;font-size:1.1rem}
+  .lead{font-size:1.25rem;color:var(--ink2)}
+  .badge{display:inline-block;font-size:.85rem;font-weight:700;padding:3px 12px;border-radius:6px;background:#ccfbf1;color:#0f766e;margin-left:.4rem;vertical-align:middle}
+  .badge.warn{background:#fef9c3;color:#854d0e}
+  .badge.fail{background:#fee2e2;color:#b91c1c}
+  ul{padding-left:1.4rem;margin:.5rem 0}
+  li{color:var(--text);margin:.4rem 0;font-size:1.05rem}
+  code{font-family:'JetBrains Mono',monospace;background:#f1f5f9;color:#0f766e;padding:1px 7px;border-radius:4px;font-size:.92em}
+  table{width:100%;border-collapse:collapse;font-size:1.02rem;margin-top:.9rem;background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  th{background:var(--ink);color:#fff;text-align:left;padding:.7rem 1rem;font-size:.85rem;letter-spacing:.04em}
+  td{padding:.7rem 1rem;border-top:1px solid var(--line);color:var(--text);font-size:1rem}
+  tr:nth-child(even) td{background:#fafbfc}
+  .pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.82rem;font-weight:700;padding:2px 9px;border-radius:999px}
+  .pill.fail{background:#fee2e2;color:var(--del)} .pill.warn{background:#fef3c7;color:var(--qty)}
+  .pill.pass{background:#dcfce7;color:var(--add)}
+  .mono{font-family:'JetBrains Mono',monospace}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-top:1rem}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1.2rem 1.4rem}
+  .card h4{font-size:.92rem;color:var(--soft);letter-spacing:.04em;margin-bottom:.5rem;font-weight:800}
+
+  .hero{min-height:100vh;display:flex;align-items:center;background:linear-gradient(135deg,#0a1322,#13233f 55%,#0a1322);color:#fff;border:none}
+  .hero h1{font-size:3.7rem;font-weight:900;letter-spacing:-.03em;line-height:1.22}
+  .hero h1 .hl{background:linear-gradient(120deg,#2dd4bf,#0d9488);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero .lead{font-size:1.4rem;color:rgba(255,255,255,.86);margin-top:1.4rem;font-weight:300}
+  .hero .eyebrow{display:inline-block;border:1px solid rgba(45,212,191,.5);color:var(--accent2);border-radius:999px;padding:.35rem 1.1rem;font-size:.85rem;letter-spacing:.18em;margin-bottom:1.6rem}
+  .hero .mono{color:rgba(255,255,255,.6);margin-top:1.8rem;font-size:.95rem}
+
+  .pipe{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;margin-top:1.2rem}
+  .pipe .box{border-radius:14px;padding:1.3rem 1.5rem;border:1px solid var(--line);background:#fff}
+  .pipe .box.det{border-top:4px solid var(--accent)}
+  .pipe .box.llm{border-top:4px solid #94a3b8}
+  .pipe .box h3{font-size:1.15rem;margin-bottom:.5rem}
+  .arrow{text-align:center;color:var(--soft);font-size:1rem;margin:.5rem 0}
+
+  .term{background:#0a1322;color:#e2e8f0;border-radius:12px;padding:1.3rem 1.6rem;font-family:'JetBrains Mono',monospace;font-size:.98rem;line-height:1.7;overflow:hidden;margin-top:1rem}
+  .term .pr{color:#2dd4bf}
+  .term .f{color:#f87171}
+  .term .w{color:#fbbf24}
+  .term .g{color:#4ade80}
+  .free{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-top:1rem}
+  .free .c{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1.2rem;text-align:center}
+  .free .c .big{font-size:1.5rem;font-weight:900;color:var(--accent)}
+  .free .c .s{font-size:.9rem;color:var(--soft);margin-top:.3rem}
+</style>
+</head>
+<body>
+
+<!-- S1 -->
+<section class="hero sec-hero">
+  <div class="wrap">
+    <span class="eyebrow">AI モデル サプライチェーン防御 / PoC</span>
+    <h1><span class="hl">modelseal</span><br/>ダウンロードしたモデルを、<br/>使う前に検品する。</h1>
+    <p class="lead">実行せずに透視する X 線検査・出どころの照合・承認後の変更監視。<br/>「仕込み済み・出所不明・黙って変わった」モデルを堰き止めます。</p>
+    <p class="mono">non-executing x-ray + provenance + approval baseline · runtime dependencies = 0</p>
+  </div>
+</section>
+
+<!-- S2 -->
+<section class="sec-problem">
+  <div class="wrap">
+    <h2><span class="n">THE PROBLEM</span>モデルファイルは<span class="ac">開くだけで危ない</span>ことがある</h2>
+    <p class="lead">広く使われる保存形式には、読み込んだ瞬間にコードが動くものがあります。</p>
+    <ul>
+      <li>悪意あるモデルの配布は、実際に起きている攻撃手口です</li>
+      <li>標準的な検査機そのものを、すり抜ける手口も公開されました</li>
+      <li>安全な形式のふりをした偽物や、承認後に黙って差し替わる事故もあります</li>
+    </ul>
+    <p>既存の検査機は「仕込みの検出」に集中しており、出どころの照合と変更の監視は空白でした。</p>
+  </div>
+</section>
+
+<!-- S3 -->
+<section class="sec-xray">
+  <div class="wrap">
+    <h2><span class="n">① X-RAY</span>実行せずに<span class="ac">透視する</span><span class="badge">非実行・読み込みゼロ</span></h2>
+    <p>ファイルの中の命令の並びを、一度も実行せずに解析します。危険な呼び出しの気配があれば不合格。</p>
+    <div class="term">
+      <span class="pr">$</span> modelseal scan downloaded_model.pkl<br/>
+      verdict: <span class="f">FAIL</span>  (2 findings)<br/>
+      &nbsp;&nbsp;[<span class="f">FAIL</span>] MS-PICKLE-DANGEROUS-IMPORT  downloaded_model.pkl@2<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; references a known code-execution sink<br/>
+      <span class="pr">$</span> echo $?  <span style="color:#64748b"># 終了コード = 2 なので CI も止まる</span><br/>
+      2
+    </div>
+  </div>
+</section>
+
+<!-- S4 -->
+<section class="sec-prov">
+  <div class="wrap">
+    <h2><span class="n">② PROVENANCE</span><span class="ac">出どころ</span>を照合する</h2>
+    <p>指紋（ハッシュ）を計算し、配布元の公表値と照合。<strong>照合できないものを黙って通しません。</strong></p>
+    <div class="term">
+      <span class="pr">$</span> modelseal scan model.safetensors --expect-hash model.safetensors=9f3b...<br/>
+      &nbsp;&nbsp;[<span class="g">INFO</span>] MS-PROVENANCE-OK — 公表値と一致<br/>
+      <br/>
+      <span class="pr">$</span> modelseal scan unknown_origin.pt <span style="color:#64748b"># 期待値なしの場合</span><br/>
+      &nbsp;&nbsp;[<span class="w">WARN</span>] MS-PROVENANCE-UNVERIFIED — 来歴未検証と明示（暗黙の合格なし）
+    </div>
+  </div>
+</section>
+
+<!-- S5 -->
+<section class="sec-baseline">
+  <div class="wrap">
+    <h2><span class="n">③ BASELINE</span>承認した中身が<span class="ac">黙って変わってない</span>か</h2>
+    <p>レビューして承認した時点の姿を記録。以後の検査で差分を監視します。</p>
+    <table>
+      <tr><th>検出</th><th>意味</th><th>判定</th></tr>
+      <tr><td><span class="pill warn">CHANGED</span></td><td>承認後に中身が変わった</td><td>警告</td></tr>
+      <tr><td><span class="pill fail">SEVERITY-UP</span></td><td>変わった上に危険度が上がった</td><td><strong>無条件で不合格</strong></td></tr>
+      <tr><td><span class="pill warn">ADDED / REMOVED</span></td><td>承認外のファイルが出入りした</td><td>警告</td></tr>
+    </table>
+    <div class="term">
+      <span class="pr">$</span> modelseal approve models/ --manifest baseline.json<br/>
+      approved 3 artifact(s) -&gt; baseline.json<br/>
+      <span class="pr">$</span> modelseal diff models/ --manifest baseline.json<br/>
+      &nbsp;&nbsp;[<span class="f">FAIL</span>] MS-BASELINE-SEVERITY-UP — risk rose since approval (INFO -&gt; FAIL)
+    </div>
+  </div>
+</section>
+
+<!-- S6 -->
+<section class="sec-format">
+  <div class="wrap">
+    <h2><span class="n">FORMAT INTEGRITY</span>安全な形式の<span class="ac">なりすまし</span>を見抜く</h2>
+    <p>形式の判定は拡張子でなく<strong>中身そのもの</strong>で行います。宣言と実体が食い違えば不合格。</p>
+    <div class="grid2">
+      <div class="card"><h4>拡張子偽装</h4>
+        <p>安全形式の名前を着た実行可能コンテナ → <span class="pill warn">MS-EXTENSION-SPOOF</span></p></div>
+      <div class="card"><h4>ヘッダ不整合</h4>
+        <p>宣言されたサイズや構造が実体と矛盾 → <span class="pill fail">MS-SAFETENSORS-MALFORMED</span></p></div>
+    </div>
+  </div>
+</section>
+
+<!-- S7 -->
+<section class="sec-failclosed">
+  <div class="wrap">
+    <h2><span class="n">BYPASS RESISTANCE</span>検査を<span class="ac">妨害されたら不合格</span>に倒す</h2>
+    <p class="lead">先行の検査機は「解析に失敗すると素通り」する穴を突かれました。modelseal は逆に倒します。</p>
+    <table>
+      <tr><th>公開済みのすり抜け手口</th><th>modelseal の応答</th></tr>
+      <tr><td>壊したファイルで検査機を落とす</td><td><span class="pill fail">MS-UNPARSEABLE</span> 解析不能 = 不合格</td></tr>
+      <tr><td>安全形式の拡張子に偽装する</td><td><span class="pill warn">MS-EXTENSION-SPOOF</span> 中身で判定</td></tr>
+      <tr><td>遠回しな呼び出しで検出語を避ける</td><td><span class="pill fail">MS-PICKLE-DANGEROUS-IMPORT</span> 組立経路も追跡</td></tr>
+    </table>
+    <p style="margin-top:.7rem">公開済み 3 手口は再現テストとして恒久化済み<span class="badge">3 / 3 検出を確認</span></p>
+  </div>
+</section>
+
+<!-- S8 -->
+<section class="sec-split">
+  <div class="wrap">
+    <h2><span class="n">DESIGN</span>合否判定に<span class="ac">エーアイを関与させない</span></h2>
+    <div class="pipe">
+      <div class="box det"><h3>決定論コア</h3><p>X 線・照合・差分の全判定。エーアイ不使用・ネット不要・毎回同じ結果。</p></div>
+      <div class="box llm"><h3>エーアイ任意層</h3><p>検出結果の平易な説明だけを担当。合否や終了コードは一切変えません。</p></div>
+    </div>
+    <p class="arrow">安全の判定は決定論で確実に。説明の文章だけをローカルのエーアイが補助します。</p>
+  </div>
+</section>
+
+<!-- S9 -->
+<section class="sec-free">
+  <div class="wrap">
+    <h2><span class="n">CONSTRAINTS</span>すべて<span class="ac">無料</span>・登録不要で動く</h2>
+    <div class="free">
+      <div class="c"><div class="big">無料</div><div class="s">課金サービス不使用</div></div>
+      <div class="c"><div class="big">カード不要</div><div class="s">登録なしで起動</div></div>
+      <div class="c"><div class="big">ローカル</div><div class="s">検査は外部送信ゼロ</div></div>
+      <div class="c"><div class="big">依存ゼロ</div><div class="s">標準ライブラリのみ</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- S10 -->
+<section class="sec-license">
+  <div class="wrap">
+    <h2><span class="n">OPEN SOURCE</span>エムアイティー ライセンス</h2>
+    <p class="lead">modelseal — ダウンロードした AI モデルを、使う前に検品するゲート。</p>
+    <p>表示データはすべて合成データです。実在のモデルや攻撃コードは含みません。</p>
+    <p class="mono">MIT License · non-executing x-ray + provenance + approval baseline</p>
+  </div>
+</section>
+
+</body>
+</html>

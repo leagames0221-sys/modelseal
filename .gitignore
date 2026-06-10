@@ -7,6 +7,9 @@ notes/private/
 .env.*
 *.local
 
+# --- video pipeline intermediates (final MP4 in video/out/ IS tracked) ---
+video/_temp/
+
 # --- Python ---
 __pycache__/
 *.py[cod]
