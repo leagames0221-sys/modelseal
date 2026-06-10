@@ -20,12 +20,14 @@ MANIFEST_VERSION = 1
 def _artifact_summary(engine: Engine, path: Path) -> dict:
     """Per-artifact baseline entry: hash + format + scan summary (ADR-0005)."""
     findings, prov = engine.scan_artifact(path)
-    p = prov[0]
     max_sev = max((f.severity for f in findings), default=Severity.INFO)
     rule_ids = sorted({f.rule_id for f in findings})
+    # Fail-closed: even if an engine ever yields no provenance, the baseline
+    # must record the artifact (as unreadable) rather than crash.
+    sha256, fmt = (prov[0].sha256, prov[0].fmt) if prov else ("", "unreadable")
     return {
-        "sha256": p.sha256,
-        "fmt": p.fmt,
+        "sha256": sha256,
+        "fmt": fmt,
         "max_severity": Severity(max_sev).name,
         "rule_ids": rule_ids,
     }

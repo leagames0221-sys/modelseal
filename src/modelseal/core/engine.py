@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from modelseal.core.contracts import Finding, Report, Scanner, Severity
+from modelseal.core.contracts import Finding, Provenance, Report, Scanner, Severity
 from modelseal.core.provenance import build_provenance
 
 # Bytes read from the head of each artifact for content-based sniffing (AC-9).
@@ -46,7 +46,11 @@ class Engine:
             findings.append(
                 Finding(RULE_UNPARSEABLE, Severity.FAIL, str(path), f"unreadable: {exc}")
             )
-            return findings, []
+            # Still emit a (minimal) provenance record so downstream consumers
+            # such as the baseline never receive an artifact without one.
+            return findings, [
+                Provenance(path=str(path), sha256="", size=0, fmt="unreadable")
+            ]
 
         fmt = "unknown"
         scanner = self._select(header, path)
