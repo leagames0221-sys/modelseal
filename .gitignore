@@ -1,0 +1,20 @@
+# --- dual-track PRIVATE (絶対に PUBLIC へ出さない) ---
+.claude/
+CLAUDE.md
+.tmp/
+notes/private/
+.env
+.env.*
+*.local
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+build/
+dist/
+.venv/
+venv/
