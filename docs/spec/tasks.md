@@ -17,7 +17,7 @@
 | T-08 | rendering | `core/render.py` (SARIF/JSON/human) | AC-25,26 | ✅ |
 | T-09 | CLI | `cli.py` (exit 0/1/2) | AC-1,2 | ✅ |
 | T-10 | explain layer | `packs/explain/ollama_provider.py` | AC-21..24 | ✅ |
-| T-11 | tests + bypass probe | `tests/` (43 tests; probe 3/3) | AC-3,4 + ADR-0004 | ✅ |
+| T-11 | tests + bypass probe | `tests/` (46 tests; probe 3/3) | AC-3,4 + ADR-0004 | ✅ |
 | T-12 | README + ADRs | `README.md`, `docs/adr/0001..0006` | AC-29,30 | ✅ |
 | T-13 | CI | pytest+ruff matrix (3.11/3.12) + secret scanning | — | ✅ |
 
